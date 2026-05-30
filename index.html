@@ -49,7 +49,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-extrabold bg-gradient-to-br from-white via-cyan-100 to-cyan-500 bg-clip-text text-transparent drop-shadow-sm pb-1">Timestep</h1>
-            <p class="text-slate-400 text-sm font-medium tracking-wide">Mai Văn Khánh VIDE CODE</p>
+            <p class="text-slate-400 text-sm font-medium tracking-wide">Mai Văn Khánh Vide Code</p>
         </div>
 
         <!-- Setup Section -->
@@ -446,6 +446,17 @@
 
             // Play initial sound based on starting phase
             if (state.currentPhase === PHASES.READY) {
+                // Unlock bell audio for strict browsers (like mobile/GitHub Pages) 
+                // by playing it muted during this user interaction.
+                const bellStartAudio = document.getElementById('audio-bell-start');
+                if (bellStartAudio) {
+                    bellStartAudio.muted = true;
+                    bellStartAudio.play().then(() => {
+                        bellStartAudio.pause();
+                        bellStartAudio.currentTime = 0;
+                        bellStartAudio.muted = false;
+                    }).catch(() => {});
+                }
                 playSound('phone');
             } else {
                 playSound('bell-2');
