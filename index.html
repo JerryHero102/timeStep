@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timestep - Interval Timer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* slate-950 */
+            color: #f8fafc; /* slate-50 */
+        }
+        .timer-font {
+            font-family: 'Outfit', sans-serif;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Custom input styles to hide arrows */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.02\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] relative">
+
+    <!-- Ambient Glow Background -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] mix-blend-screen"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen"></div>
+    </div>
+
+    <!-- Audio Assets -->
+    <audio id="audio-bell-start" src="bell.mp3" preload="auto"></audio>
+    <audio id="audio-ding" src="ding.mp3" preload="auto"></audio>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-[420px] bg-slate-900/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-cyan-900/20 p-8 relative overflow-hidden border border-slate-800/60 z-10">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold bg-gradient-to-br from-white via-cyan-100 to-cyan-500 bg-clip-text text-transparent drop-shadow-sm pb-1">Timestep</h1>
+            <p class="text-slate-400 text-sm font-medium tracking-wide">INTERVAL TRAINING</p>
+        </div>
+
+        <!-- Setup Section -->
+        <div id="setup-section" class="space-y-6 transition-all duration-300">
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Ready Time -->
+                <div class="bg-slate-800/60 p-4 rounded-3xl border border-slate-700/50 hover:border-slate-600/50 transition-colors focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/50 group">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-center group-focus-within:text-cyan-400 transition-colors">Chuẩn bị</label>
+                    <div class="flex items-center justify-center">
+                        <input type="number" id="input-ready" value="10" min="0" class="w-16 bg-transparent text-white text-3xl font-semibold text-center focus:outline-none timer-font">
+                        <span class="text-slate-500 text-sm ml-1 font-medium">s</span>
+                    </div>
+                </div>
+                <!-- Rounds -->
+                <div class="bg-slate-800/60 p-4 rounded-3xl border border-slate-700/50 hover:border-slate-600/50 transition-colors focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 group">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-center group-focus-within:text-blue-400 transition-colors">Số hiệp</label>
+                    <div class="flex items-center justify-center">
+                        <input type="number" id="input-rounds" value="3" min="1" class="w-16 bg-transparent text-white text-3xl font-semibold text-center focus:outline-none timer-font">
+                        <span class="text-slate-500 text-sm ml-1 font-medium">x</span>
+                    </div>
+                </div>
+                <!-- Round Time -->
+                <div class="bg-slate-800/60 p-4 rounded-3xl border border-slate-700/50 hover:border-slate-600/50 transition-colors focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/50 group">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-center group-focus-within:text-emerald-400 transition-colors">Hiệp đấu</label>
+                    <div class="flex items-center justify-center">
+                        <input type="number" id="input-work" value="180" min="1" class="w-16 bg-transparent text-white text-3xl font-semibold text-center focus:outline-none timer-font">
+                        <span class="text-slate-500 text-sm ml-1 font-medium">s</span>
+                    </div>
+                </div>
+                <!-- Rest Time -->
+                <div class="bg-slate-800/60 p-4 rounded-3xl border border-slate-700/50 hover:border-slate-600/50 transition-colors focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/50 group">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-center group-focus-within:text-purple-400 transition-colors">Nghỉ ngơi</label>
+                    <div class="flex items-center justify-center">
+                        <input type="number" id="input-rest" value="60" min="0" class="w-16 bg-transparent text-white text-3xl font-semibold text-center focus:outline-none timer-font">
+                        <span class="text-slate-500 text-sm ml-1 font-medium">s</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-start-setup" class="w-full py-4 mt-6 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-full text-lg shadow-lg shadow-cyan-500/25 transition-all active:scale-[0.98] transform flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                  <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
+                </svg>
+                BẮT ĐẦU
+            </button>
+        </div>
+
+        <!-- Timer Section -->
+        <div id="timer-section" class="hidden flex-col items-center justify-center space-y-8 animate-[fadeIn_0.5s_ease-out]">
+            
+            <!-- Phase Indicator -->
+            <div id="phase-badge" class="px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.2)] transition-all duration-300">
+                Chuẩn Bị
+            </div>
+
+            <!-- Circular Progress & Time -->
+            <div class="relative flex items-center justify-center mt-4 mb-4">
+                <svg class="w-64 h-64 transform -rotate-90">
+                    <defs>
+                        <linearGradient id="ready-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#facc15" />
+                            <stop offset="100%" stop-color="#f59e0b" />
+                        </linearGradient>
+                        <linearGradient id="work-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#22d3ee" />
+                            <stop offset="100%" stop-color="#3b82f6" />
+                        </linearGradient>
+                        <linearGradient id="rest-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#a855f7" />
+                            <stop offset="100%" stop-color="#ec4899" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="128" cy="128" r="116" stroke="currentColor" stroke-width="6" fill="transparent" class="text-slate-800"/>
+                    <!-- Dash array = 2 * PI * 116 = 728.85 -->
+                    <circle id="progress-ring" cx="128" cy="128" r="116" stroke="url(#ready-gradient)" stroke-width="10" stroke-linecap="round" fill="transparent" stroke-dasharray="728.85" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear drop-shadow-lg"/>
+                </svg>
+                
+                <div class="absolute flex flex-col items-center">
+                    <div id="time-display" class="text-7xl font-bold timer-font text-white drop-shadow-md tracking-tighter">
+                        00:10
+                    </div>
+                    <div id="round-display" class="text-slate-400 font-medium text-sm tracking-widest uppercase mt-2">
+                        Hiệp 1 / 3
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-4 w-full pt-2">
+                <button id="btn-pause" class="flex-1 py-4 bg-slate-800/80 hover:bg-slate-700/80 text-white font-bold rounded-2xl transition-all active:scale-95 border border-slate-700/50 flex items-center justify-center gap-2">
+                    <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="text-pause">DỪNG</span>
+                </button>
+                <button id="btn-reset" class="flex-1 py-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                    HỦY
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <script>
+        // DOM Elements
+        const setupSection = document.getElementById('setup-section');
+        const timerSection = document.getElementById('timer-section');
+        
+        const inputReady = document.getElementById('input-ready');
+        const inputRounds = document.getElementById('input-rounds');
+        const inputWork = document.getElementById('input-work');
+        const inputRest = document.getElementById('input-rest');
+
+        const btnStartSetup = document.getElementById('btn-start-setup');
+        const btnPause = document.getElementById('btn-pause');
+        const btnReset = document.getElementById('btn-reset');
+        const textPause = document.getElementById('text-pause');
+        const iconPause = document.getElementById('icon-pause');
+
+        const timeDisplay = document.getElementById('time-display');
+        const roundDisplay = document.getElementById('round-display');
+        const phaseBadge = document.getElementById('phase-badge');
+        const progressRing = document.getElementById('progress-ring');
+
+        // State
+        let config = { ready: 10, rounds: 3, work: 180, rest: 60 };
+
+        const PHASES = {
+            READY: 'ready',
+            WORK: 'work',
+            REST: 'rest',
+            DONE: 'done'
+        };
+
+        const PHASE_COLORS = {
+            [PHASES.READY]: { 
+                text: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', 
+                shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.2)]', label: 'CHUẨN BỊ', url: 'url(#ready-gradient)'
+            },
+            [PHASES.WORK]: { 
+                text: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', 
+                shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.2)]', label: 'HIỆP ĐẤU', url: 'url(#work-gradient)'
+            },
+            [PHASES.REST]: { 
+                text: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', 
+                shadow: 'shadow-[0_0_15px_rgba(168,85,247,0.2)]', label: 'NGHỈ NGƠI', url: 'url(#rest-gradient)'
+            },
+            [PHASES.DONE]: { 
+                text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', 
+                shadow: 'shadow-[0_0_15px_rgba(52,211,153,0.2)]', label: 'HOÀN THÀNH', url: 'currentColor'
+            }
+        };
+
+        let state = {
+            isRunning: false,
+            currentPhase: PHASES.READY,
+            currentRound: 1,
+            timeLeft: 0,
+            totalPhaseTime: 0,
+            timerId: null
+        };
+
+        const CIRCUMFERENCE = 2 * Math.PI * 116; // r=116
+
+        // Format time mm:ss
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // Update UI
+        function updateUI() {
+            timeDisplay.textContent = formatTime(state.timeLeft);
+            
+            if (state.currentPhase === PHASES.DONE) {
+                roundDisplay.textContent = 'Hoàn thành';
+                progressRing.style.stroke = '#10b981'; // emerald-500
+            } else {
+                roundDisplay.textContent = `HIỆP ${state.currentRound} / ${config.rounds}`;
+                progressRing.setAttribute('stroke', PHASE_COLORS[state.currentPhase].url);
+            }
+
+            // Update Progress Ring
+            let progress = 0;
+            if (state.totalPhaseTime > 0) {
+                progress = state.timeLeft / state.totalPhaseTime;
+            }
+            const offset = CIRCUMFERENCE - (progress * CIRCUMFERENCE);
+            progressRing.style.strokeDashoffset = offset || 0;
+            
+            if (state.timeLeft === state.totalPhaseTime) {
+                progressRing.style.transitionDuration = '0s';
+            } else {
+                progressRing.style.transitionDuration = '1s';
+            }
+
+            // Update Colors & Labels
+            const colors = PHASE_COLORS[state.currentPhase];
+            phaseBadge.textContent = colors.label;
+            phaseBadge.className = `px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 ${colors.bg} ${colors.text} border ${colors.border} ${colors.shadow}`;
+        }
+
+        // Play Sounds using Web Audio API
+        function playSound(type) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if(!AudioContext) return;
+            const ctx = new AudioContext();
+
+            const playBellStrike = (startTime) => {
+                const freqs = [350, 480, 700, 1050];
+                freqs.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.6 / freqs.length, startTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 2.5 + (i * 0.5));
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + 4);
+                });
+            };
+
+            const playPhoneSequence = (startTime) => {
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const mainGain = ctx.createGain();
+                
+                // Classic phone ring effect (e.g. UK/US style frequencies)
+                osc1.type = 'square';
+                osc2.type = 'square';
+                osc1.frequency.value = 440;
+                osc2.frequency.value = 480;
+                
+                osc1.connect(mainGain);
+                osc2.connect(mainGain);
+                mainGain.connect(ctx.destination);
+                
+                mainGain.gain.setValueAtTime(0, startTime);
+                
+                // Ring 1
+                mainGain.gain.setValueAtTime(0.05, startTime);
+                mainGain.gain.setValueAtTime(0, startTime + 0.4);
+                // Ring 2
+                mainGain.gain.setValueAtTime(0.05, startTime + 0.6);
+                mainGain.gain.setValueAtTime(0, startTime + 1.0);
+                
+                osc1.start(startTime);
+                osc2.start(startTime);
+                osc1.stop(startTime + 1.1);
+                osc2.stop(startTime + 1.1);
+            };
+
+            if (type === 'phone') {
+                const dingAudio = document.getElementById('audio-ding');
+                if (dingAudio) {
+                    dingAudio.currentTime = 0;
+                    dingAudio.play().then(() => {
+                        // Only play the first 1 second
+                        setTimeout(() => {
+                            dingAudio.pause();
+                            dingAudio.currentTime = 0;
+                        }, 2000);
+                    }).catch(e => {
+                        playPhoneSequence(ctx.currentTime);
+                    });
+                } else {
+                    playPhoneSequence(ctx.currentTime);
+                }
+            } else if (type === 'bell-1' || type === 'bell-2') {
+                const bellStartAudio = document.getElementById('audio-bell-start');
+                if (bellStartAudio) {
+                    bellStartAudio.currentTime = 0;
+                    bellStartAudio.play().catch(e => {
+                        playBellStrike(ctx.currentTime);
+                        if (type === 'bell-2') playBellStrike(ctx.currentTime + 0.4);
+                    });
+                } else {
+                    playBellStrike(ctx.currentTime);
+                    if (type === 'bell-2') playBellStrike(ctx.currentTime + 0.4);
+                }
+            } else if (type === 'bell-3') {
+                playBellStrike(ctx.currentTime);
+                playBellStrike(ctx.currentTime + 0.4);
+                playBellStrike(ctx.currentTime + 0.8);
+            }
+        }
+
+        function tick() {
+            if (state.timeLeft > 0) {
+                state.timeLeft--;
+                updateUI();
+            } else {
+                // Phase Transition
+                switch (state.currentPhase) {
+                    case PHASES.READY:
+                        state.currentPhase = PHASES.WORK;
+                        state.timeLeft = config.work;
+                        state.totalPhaseTime = config.work;
+                        playSound('bell-2'); // Start work round = 2 bells
+                        break;
+                    case PHASES.WORK:
+                        if (state.currentRound >= config.rounds) {
+                            state.currentPhase = PHASES.DONE;
+                            state.timeLeft = 0;
+                            state.totalPhaseTime = 1;
+                            playSound('bell-3'); // Finish all = 3 bells
+                            stopTimer();
+                        } else {
+                            state.currentPhase = PHASES.REST;
+                            state.timeLeft = config.rest;
+                            state.totalPhaseTime = config.rest;
+                            playSound('bell-1'); // End work round / start rest = 1 bell
+                        }
+                        break;
+                    case PHASES.REST:
+                        state.currentRound++;
+                        state.currentPhase = PHASES.WORK;
+                        state.timeLeft = config.work;
+                        state.totalPhaseTime = config.work;
+                        playSound('bell-2'); // Start work round = 2 bells
+                        break;
+                }
+                updateUI();
+            }
+        }
+
+        function startTimer() {
+            if (!state.isRunning && state.currentPhase !== PHASES.DONE) {
+                state.isRunning = true;
+                textPause.textContent = 'DỪNG';
+                iconPause.innerHTML = '<path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />';
+                state.timerId = setInterval(tick, 1000);
+            }
+        }
+
+        function stopTimer() {
+            state.isRunning = false;
+            clearInterval(state.timerId);
+            textPause.textContent = state.currentPhase === PHASES.DONE ? 'XONG' : 'TIẾP';
+            iconPause.innerHTML = '<path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />';
+            
+            if (state.currentPhase === PHASES.DONE) {
+                btnPause.disabled = true;
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Init App
+        btnStartSetup.addEventListener('click', () => {
+            // Retrieve & validate input values
+            config.ready = Math.max(0, parseInt(inputReady.value) || 0);
+            config.rounds = Math.max(1, parseInt(inputRounds.value) || 1);
+            config.work = Math.max(1, parseInt(inputWork.value) || 1);
+            config.rest = Math.max(0, parseInt(inputRest.value) || 0);
+
+            // Set Initial State
+            state.currentPhase = config.ready > 0 ? PHASES.READY : PHASES.WORK;
+            state.currentRound = 1;
+            state.timeLeft = config.ready > 0 ? config.ready : config.work;
+            state.totalPhaseTime = state.timeLeft;
+            
+            // UI Switch
+            setupSection.classList.add('hidden');
+            timerSection.classList.remove('hidden');
+            timerSection.classList.add('flex');
+
+            btnPause.disabled = false;
+            btnPause.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            updateUI();
+            
+            // To ensure AudioContext is allowed (requires user gesture)
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if(AudioContext) {
+                new AudioContext().resume();
+            }
+
+            // Play initial sound based on starting phase
+            if (state.currentPhase === PHASES.READY) {
+                playSound('phone');
+            } else {
+                playSound('bell-2');
+            }
+
+            startTimer();
+        });
+
+        btnPause.addEventListener('click', () => {
+            if (state.isRunning) {
+                stopTimer();
+            } else if (state.currentPhase !== PHASES.DONE) {
+                startTimer();
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            stopTimer();
+            timerSection.classList.add('hidden');
+            timerSection.classList.remove('flex');
+            setupSection.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
